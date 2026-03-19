@@ -46,14 +46,12 @@ const AgentCard = ({ agent, latestInsight, onClickDetails }) => {
           <span>👉</span> 
           <div>{latestInsight ? latestInsight.message : "Waiting for insights..."}</div>
         </div>
-        {agent.name.includes("Ads Performance") && (
-          <button 
-            onClick={() => onClickDetails(agent)}
-            style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid var(--primary)', color: 'var(--text-main)', cursor: 'pointer', fontWeight: '600' }}
-          >
-            View Ad Campaign Details
-          </button>
-        )}
+        <button 
+          onClick={() => onClickDetails(agent)}
+          style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid var(--primary)', color: 'var(--text-main)', cursor: 'pointer', fontWeight: '600' }}
+        >
+          View Agent Action Details
+        </button>
       </div>
     </div>
   );

@@ -1,9 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
+import Sidebar from './components/Sidebar';
 import AgentCard from './components/AgentCard';
 
 const API_BASE = 'http://localhost:5000/api';
-const ADS_AGENT_API = 'http://localhost:5001/api/ads/performance';
+
+const getAgentApiUrl = (agentName) => {
+  if (agentName.includes("Ads Performance")) return 'http://localhost:5001/api/details';
+  if (agentName.includes("SEO Audit")) return 'http://localhost:5002/api/details';
+  if (agentName.includes("GA4 Insights")) return 'http://localhost:5003/api/details';
+  if (agentName.includes("Error Logs")) return 'http://localhost:5004/api/details';
+  if (agentName.includes("Privacy")) return 'http://localhost:5005/api/details';
+  if (agentName.includes("Lead Tracking")) return 'http://localhost:5006/api/details';
+  if (agentName.includes("Content")) return 'http://localhost:5007/api/details';
+  if (agentName.includes("Conversion")) return 'http://localhost:5008/api/details';
+  if (agentName.includes("Website Performance")) return 'http://localhost:5009/api/details';
+  if (agentName.includes("Master") || agentName.includes("Reporting")) return 'http://localhost:5010/api/details';
+  return null;
+};
 
 function App() {
   const [agents, setAgents] = useState([]);
@@ -46,11 +60,14 @@ function App() {
     );
   };
 
-  const handleOpenAdsDetails = async () => {
+  const handleOpenDetails = async (agent) => {
+    const apiUrl = getAgentApiUrl(agent.name);
+    if (!apiUrl) return alert("API not configured for this agent");
+
     setModalOpen(true);
     setLoadingAds(true);
     try {
-      const res = await fetch(ADS_AGENT_API);
+      const res = await fetch(apiUrl);
       const data = await res.json();
       setAdsData(data);
     } catch (err) {
@@ -86,7 +103,7 @@ function App() {
                 key={agent._id} 
                 agent={agent} 
                 latestInsight={getLatestInsightForAgent(agent._id)} 
-                onClickDetails={handleOpenAdsDetails}
+                onClickDetails={handleOpenDetails}
               />
             ))}
           </div>
@@ -96,34 +113,35 @@ function App() {
           <div className="modal-overlay" onClick={() => setModalOpen(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <button className="modal-close" onClick={() => setModalOpen(false)}>×</button>
-              <h2 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Ads Performance Details</h2>
               
               {loadingAds ? (
-                <div className="loading-pulse" style={{ padding: '2rem', textAlign: 'center' }}>Loading live ad data...</div>
+                <div className="loading-pulse" style={{ padding: '2rem', textAlign: 'center' }}>Loading live data from agent...</div>
               ) : adsData ? (
                 <div>
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ flex: 1, padding: '1rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Spend</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{adsData.summary.totalSpend}</div>
-                    </div>
-                    <div style={{ flex: 1, padding: '1rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Avg ROAS</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--status-active)' }}>{adsData.summary.averageRoas}x</div>
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h2 style={{ color: 'var(--text-main)', margin: 0 }}>{adsData.title}</h2>
+                    <span className="badge" style={{ color: adsData.status === 'Critical' ? 'var(--status-error)' : adsData.status === 'Warning' ? 'var(--status-warning)' : 'var(--status-active)', borderColor: 'currentColor', fontWeight: 600, padding: '6px 14px' }}>{adsData.status}</span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>Active Campaigns</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    {adsData.campaigns.map(c => (
-                      <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', borderLeft: `4px solid ${c.color}` }}>
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {adsData.metrics.map((m, idx) => (
+                      <div key={idx} style={{ flex: 1, padding: '1rem', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{m.label}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: m.highlight ? 'var(--primary)' : 'inherit' }}>{m.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>Detailed Audit</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                    {adsData.lists.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', borderLeft: `4px solid ${item.color}` }}>
                         <div>
-                          <div style={{ fontWeight: 600 }}>{c.name} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>({c.platform})</span></div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Spend: ₹{c.spend} | Conversions: {c.conversions}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{item.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{item.details}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 'bold', color: c.color }}>{c.roas}x ROAS</div>
-                          <div style={{ fontSize: '0.75rem', color: c.color }}>{c.status}</div>
+                          <div style={{ fontWeight: 'bold', color: item.color }}>{item.value}</div>
                         </div>
                       </div>
                     ))}
